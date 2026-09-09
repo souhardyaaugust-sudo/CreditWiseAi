@@ -251,20 +251,24 @@ class ModelManager:
         total_income = applicant_income + coapplicant_income
         income_to_loan = total_income / (loan_amount + 1e-5)
         
+        loan_amount_rupees = loan_amount * 1000
+        loan_lakhs = loan_amount / 100
+        loan_fmt = f"₹{loan_amount_rupees:,.0f} ({loan_lakhs:.1f} Lakhs)" if loan_lakhs >= 1 else f"₹{loan_amount_rupees:,.0f}"
+
         # Point 1: Credit History (is almost always the deciding factor)
         if credit_history == 0.0:
             explanations.append({
                 "factor": "Credit History",
-                "importance": "High",
+                "importance": "High Impact",
                 "type": "negative" if prediction == 0 else "neutral",
-                "text": "Applicant has poor or no credit history, indicating high credit risk."
+                "text": "Applicant has defaulted or uncleared past credit history (0.0), indicating higher repayment risk."
             })
         else:
             explanations.append({
                 "factor": "Credit History",
-                "importance": "High",
+                "importance": "High Impact",
                 "type": "positive" if prediction == 1 else "neutral",
-                "text": "Applicant has a reliable credit history, significantly reducing default risk."
+                "text": "Clean and verified credit history (1.0) significantly boosts approval confidence."
             })
             
         # Point 2: Income and Loan Ratio
@@ -272,45 +276,45 @@ class ModelManager:
             if income_to_loan > 35:
                 explanations.append({
                     "factor": "Income-to-Loan Ratio",
-                    "importance": "Medium-High",
+                    "importance": "High Impact",
                     "type": "positive",
-                    "text": f"Strong income-to-loan ratio ({income_to_loan:.1f}x). Total income of ₹{total_income:,.0f} comfortably covers the requested ₹{loan_amount*1000:,.0f} loan."
+                    "text": f"Strong income multiplier ({income_to_loan:.1f}x). Total monthly income of ₹{total_income:,.0f} comfortably covers the requested loan of {loan_fmt}."
                 })
             elif total_income > 8000:
                 explanations.append({
-                    "factor": "Applicant Income",
-                    "importance": "Medium",
+                    "factor": "Monthly Household Income",
+                    "importance": "Medium Impact",
                     "type": "positive",
-                    "text": f"High household income (₹{total_income:,.0f}/month) provides strong repayment capacity."
+                    "text": f"Combined household income of ₹{total_income:,.0f}/month meets strong solvency criteria."
                 })
             else:
                 explanations.append({
-                    "factor": "Financial Profile",
-                    "importance": "Medium",
+                    "factor": "Financial Solvency",
+                    "importance": "Medium Impact",
                     "type": "positive",
-                    "text": f"Applicant's income of ₹{total_income:,.0f} meets the baseline requirements for a loan of ₹{loan_amount*1000:,.0f} over {loan_term:.0f} months."
+                    "text": f"Total income of ₹{total_income:,.0f}/month satisfies minimum baseline eligibility for a loan of {loan_fmt} over {loan_term:.0f} months."
                 })
         else:
             if income_to_loan < 15:
                 explanations.append({
                     "factor": "Income-to-Loan Ratio",
-                    "importance": "High",
+                    "importance": "High Impact",
                     "type": "negative",
-                    "text": f"Weak income-to-loan ratio ({income_to_loan:.1f}x). Total income of ₹{total_income:,.0f} is insufficient for a loan of ₹{loan_amount*1000:,.0f}."
+                    "text": f"Low income-to-loan ratio ({income_to_loan:.1f}x). Combined monthly income of ₹{total_income:,.0f} is insufficient for a loan of {loan_fmt}."
                 })
             elif loan_amount > 250:
                 explanations.append({
-                    "factor": "Loan Amount",
-                    "importance": "Medium-High",
+                    "factor": "High Loan Amount",
+                    "importance": "High Impact",
                     "type": "negative",
-                    "text": f"The requested loan amount (₹{loan_amount*1000:,.0f}) is exceptionally high relative to standard household profiles."
+                    "text": f"The requested loan amount of {loan_fmt} exceeds standard debt-to-income limits."
                 })
             else:
                 explanations.append({
-                    "factor": "Income Sufficiency",
-                    "importance": "Medium",
+                    "factor": "Income Capacity",
+                    "importance": "Medium Impact",
                     "type": "negative",
-                    "text": f"Applicant income of ₹{total_income:,.0f}/month is considered marginal for a loan of ₹{loan_amount*1000:,.0f}."
+                    "text": f"Applicant monthly income of ₹{total_income:,.0f} is marginal relative to requested loan size of {loan_fmt}."
                 })
 
         # Point 3: Additional Demographic / employment contexts

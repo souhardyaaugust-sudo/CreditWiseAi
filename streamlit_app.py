@@ -378,13 +378,20 @@ elif menu == "🎯 Loan Predictor":
                 st.caption(f"Model Used: **{format_model_name(active_model_name, metrics_dict)}**")
 
             with res_col2:
-                st.markdown("**💡 Key Decision Explanations:**")
+                st.markdown("### 💡 Key Decision Factors & Risk Insights")
                 for exp in explanations:
                     if isinstance(exp, dict):
                         text = exp.get("text", str(exp))
-                        factor = exp.get("factor", "")
+                        factor = exp.get("factor", "Factor")
                         imp = exp.get("importance", "")
-                        st.info(f"**{factor}** ({imp} Impact): {text}")
+                        exp_type = exp.get("type", "neutral")
+                        
+                        if exp_type == "positive":
+                            st.success(f"**✅ {factor}** ({imp})\n\n{text}")
+                        elif exp_type == "negative":
+                            st.error(f"**❌ {factor}** ({imp})\n\n{text}")
+                        else:
+                            st.info(f"**ℹ️ {factor}** ({imp})\n\n{text}")
                     else:
                         st.info(f"• {exp}")
         except Exception as e:
