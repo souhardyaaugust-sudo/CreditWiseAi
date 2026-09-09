@@ -77,20 +77,48 @@ def get_managers():
 
 history_manager, model_manager = get_managers()
 
+# Helper Functions for Robust Model Key Handling
+def format_model_name(name: str, metrics_dict: dict = None) -> str:
+    """Safely converts model key to human-readable title."""
+    if metrics_dict and name in metrics_dict and "display_name" in metrics_dict[name]:
+        return metrics_dict[name]["display_name"]
+    names_map = {
+        "logistic_regression": "Logistic Regression",
+        "decision_tree": "Decision Tree Classifier",
+        "random_forest": "Random Forest Classifier",
+        "k_nearest_neighbors": "K-Nearest Neighbors",
+        "support_vector_machine": "Support Vector Machine"
+    }
+    return names_map.get(name, str(name).replace("_", " ").title())
+
+def get_metrics_dict(metadata: dict) -> dict:
+    """Safely extracts metrics dictionary from metadata regardless of key naming."""
+    if not metadata or not isinstance(metadata, dict):
+        return {}
+    if "metrics" in metadata and isinstance(metadata["metrics"], dict):
+        return metadata["metrics"]
+    if "models" in metadata and isinstance(metadata["models"], dict):
+        return metadata["models"]
+    return {}
+
 # Helper to ensure baseline model exists
 def ensure_models_trained():
-    metadata = model_manager.load_metadata()
-    if not metadata:
-        df = load_raw_data()
-        X = df.drop(columns=['Loan_ID', 'Loan_Status'])
-        y = df['Loan_Status']
-        preprocessor = LoanPreprocessor()
-        preprocessor.fit(X)
-        preprocessor.save()
-        X_trans = preprocessor.transform(X)
-        model_manager.train_all(X_trans, y, use_grid_search=False)
+    try:
         metadata = model_manager.load_metadata()
-    return metadata
+        metrics = get_metrics_dict(metadata)
+        if not metadata or not metrics:
+            df = load_raw_data()
+            X = df.drop(columns=['Loan_ID', 'Loan_Status'])
+            y = df['Loan_Status']
+            preprocessor = LoanPreprocessor()
+            preprocessor.fit(X)
+            preprocessor.save()
+            X_trans = preprocessor.transform(X)
+            metadata = model_manager.train_all(X_trans, y, use_grid_search=False)
+        return metadata
+    except Exception as e:
+        st.warning(f"Note on Model Initialization: {e}")
+        return {"best_model_name": "logistic_regression", "metrics": {}}
 
 # Main Header
 st.markdown('<div class="main-header">💳 CreditAnalyzer AI</div>', unsafe_allow_html=True)
@@ -111,77 +139,81 @@ st.sidebar.caption("WiseCredit AI • Machine Learning Platform")
 # ----------------------------------------------------
 if menu == "📊 Overview & Analytics":
     st.header("📊 Dataset Overview & Financial Analytics")
-    
-    df = load_raw_data()
-    stats = get_dataset_stats()
-    
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric("Total Applicants", len(df))
-    with col2:
-        approved_pct = (df['Loan_Status'] == 'Y').mean() * 100
-        st.metric("Approval Rate", f"{approved_pct:.1f}%")
-    with col3:
-        avg_inc = df['ApplicantIncome'].mean()
-        st.metric("Avg Applicant Income", f"${avg_inc:,.0f}")
-    with col4:
-        avg_loan = df['LoanAmount'].mean()
-        st.metric("Avg Loan Amount ($k)", f"${avg_loan:.1f}k")
+    try:
+        df = load_raw_data()
+        stats = get_dataset_stats()
         
-    st.markdown("---")
-    
-    chart_col1, chart_col2 = st.columns(2)
-    
-    with chart_col1:
-        st.subheader("Loan Approval Distribution")
-        fig, ax = plt.subplots(figsize=(6, 4))
-        status_counts = df['Loan_Status'].value_counts()
-        sns.barplot(x=status_counts.index, y=status_counts.values, palette=["#22c55e", "#ef4444"], ax=ax)
-        ax.set_xticklabels(["Approved (Y)", "Rejected (N)"])
-        ax.set_ylabel("Count")
-        st.pyplot(fig)
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("Total Applicants", len(df))
+        with col2:
+            approved_pct = (df['Loan_Status'] == 'Y').mean() * 100
+            st.metric("Approval Rate", f"{approved_pct:.1f}%")
+        with col3:
+            avg_inc = df['ApplicantIncome'].mean()
+            st.metric("Avg Applicant Income", f"${avg_inc:,.0f}")
+        with col4:
+            avg_loan = df['LoanAmount'].mean()
+            st.metric("Avg Loan Amount ($k)", f"${avg_loan:.1f}k")
+            
+        st.markdown("---")
         
-    with chart_col2:
-        st.subheader("Credit History vs Loan Approval")
-        fig, ax = plt.subplots(figsize=(6, 4))
-        sns.countplot(data=df, x='Credit_History', hue='Loan_Status', palette=["#ef4444", "#22c55e"], ax=ax)
-        ax.set_xticklabels(["No Credit History (0)", "Has Credit History (1)"])
-        ax.set_ylabel("Count")
-        st.pyplot(fig)
+        chart_col1, chart_col2 = st.columns(2)
+        
+        with chart_col1:
+            st.subheader("Loan Approval Distribution")
+            fig, ax = plt.subplots(figsize=(6, 4))
+            status_counts = df['Loan_Status'].value_counts()
+            sns.barplot(x=status_counts.index, y=status_counts.values, palette=["#22c55e", "#ef4444"], ax=ax)
+            ax.set_xticklabels(["Approved (Y)", "Rejected (N)"])
+            ax.set_ylabel("Count")
+            st.pyplot(fig)
+            
+        with chart_col2:
+            st.subheader("Credit History vs Loan Approval")
+            fig, ax = plt.subplots(figsize=(6, 4))
+            sns.countplot(data=df, x='Credit_History', hue='Loan_Status', palette=["#ef4444", "#22c55e"], ax=ax)
+            ax.set_xticklabels(["No Credit History (0)", "Has Credit History (1)"])
+            ax.set_ylabel("Count")
+            st.pyplot(fig)
 
-    st.subheader("Numeric Feature Correlation Matrix")
-    num_cols = ['ApplicantIncome', 'CoapplicantIncome', 'LoanAmount', 'Loan_Amount_Term']
-    df_num = df[num_cols].dropna()
-    fig, ax = plt.subplots(figsize=(8, 4))
-    sns.heatmap(df_num.corr(), annot=True, cmap="Blues", fmt=".2f", ax=ax)
-    st.pyplot(fig)
+        st.subheader("Numeric Feature Correlation Matrix")
+        num_cols = ['ApplicantIncome', 'CoapplicantIncome', 'LoanAmount', 'Loan_Amount_Term']
+        df_num = df[num_cols].dropna()
+        fig, ax = plt.subplots(figsize=(8, 4))
+        sns.heatmap(df_num.corr(), annot=True, cmap="Blues", fmt=".2f", ax=ax)
+        st.pyplot(fig)
+    except Exception as e:
+        st.error(f"Unable to render analytics: {e}")
 
 # ----------------------------------------------------
 # 2. DATASET EXPLORER
 # ----------------------------------------------------
 elif menu == "🔍 Dataset Explorer":
     st.header("🔍 Dataset Explorer")
-    
-    df = load_raw_data()
-    
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        status_f = st.selectbox("Loan Status Filter", ["All", "Y", "N"])
-    with col2:
-        edu_f = st.selectbox("Education Filter", ["All"] + list(df['Education'].dropna().unique()))
-    with col3:
-        search_id = st.text_input("Search by Loan ID", "")
+    try:
+        df = load_raw_data()
         
-    filtered_df = df.copy()
-    if status_f != "All":
-        filtered_df = filtered_df[filtered_df['Loan_Status'] == status_f]
-    if edu_f != "All":
-        filtered_df = filtered_df[filtered_df['Education'] == edu_f]
-    if search_id:
-        filtered_df = filtered_df[filtered_df['Loan_ID'].str.contains(search_id, case=False, na=False)]
-        
-    st.markdown(f"Showing **{len(filtered_df)}** records:")
-    st.dataframe(filtered_df, use_container_width=True)
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            status_f = st.selectbox("Loan Status Filter", ["All", "Y", "N"])
+        with col2:
+            edu_f = st.selectbox("Education Filter", ["All"] + list(df['Education'].dropna().unique()))
+        with col3:
+            search_id = st.text_input("Search by Loan ID", "")
+            
+        filtered_df = df.copy()
+        if status_f != "All":
+            filtered_df = filtered_df[filtered_df['Loan_Status'] == status_f]
+        if edu_f != "All":
+            filtered_df = filtered_df[filtered_df['Education'] == edu_f]
+        if search_id:
+            filtered_df = filtered_df[filtered_df['Loan_ID'].str.contains(search_id, case=False, na=False)]
+            
+        st.markdown(f"Showing **{len(filtered_df)}** records:")
+        st.dataframe(filtered_df, use_container_width=True)
+    except Exception as e:
+        st.error(f"Unable to load dataset explorer: {e}")
 
 # ----------------------------------------------------
 # 3. MODEL BENCHMARKING
@@ -189,46 +221,61 @@ elif menu == "🔍 Dataset Explorer":
 elif menu == "🤖 Model Benchmarking":
     st.header("🤖 Machine Learning Model Benchmarking")
     
-    ensure_models_trained()
-    metadata = model_manager.load_metadata()
+    metadata = ensure_models_trained()
+    metrics_dict = get_metrics_dict(metadata)
+    best_model_name = metadata.get("best_model_name", "logistic_regression")
     
     use_grid_search = st.checkbox("Enable GridSearchCV Hyperparameter Tuning (Takes a few seconds)", value=False)
     
     if st.button("⚡ Retrain & Benchmark Models"):
         with st.spinner("Preprocessing data and training all models..."):
-            df = load_raw_data()
-            X = df.drop(columns=['Loan_ID', 'Loan_Status'])
-            y = df['Loan_Status']
-            preprocessor = LoanPreprocessor()
-            preprocessor.fit(X)
-            preprocessor.save()
-            X_trans = preprocessor.transform(X)
-            metadata = model_manager.train_all(X_trans, y, use_grid_search=use_grid_search)
-            st.success("All models successfully trained and benchmarked!")
+            try:
+                df = load_raw_data()
+                X = df.drop(columns=['Loan_ID', 'Loan_Status'])
+                y = df['Loan_Status']
+                preprocessor = LoanPreprocessor()
+                preprocessor.fit(X)
+                preprocessor.save()
+                X_trans = preprocessor.transform(X)
+                metadata = model_manager.train_all(X_trans, y, use_grid_search=use_grid_search)
+                metrics_dict = get_metrics_dict(metadata)
+                best_model_name = metadata.get("best_model_name", "logistic_regression")
+                st.success("All models successfully trained and benchmarked!")
+            except Exception as e:
+                st.error(f"Training error: {e}")
             
-    if metadata:
+    if metrics_dict:
         st.subheader("Model Performance Comparison")
         records = []
-        for name, metrics in metadata["models"].items():
+        for name, metrics in metrics_dict.items():
+            disp_name = format_model_name(name, metrics_dict)
+            acc = metrics.get('accuracy', 0.0)
+            prec = metrics.get('precision', 0.0)
+            rec = metrics.get('recall', 0.0)
+            f1 = metrics.get('f1_score', 0.0)
+            t_time = metrics.get('training_time_seconds', metrics.get('training_time', 0.0))
+            best_params = metrics.get('best_params', {})
+            
             records.append({
-                "Model Name": metrics["display_name"],
-                "Accuracy": f"{metrics['accuracy']:.4f}",
-                "Precision": f"{metrics['precision']:.4f}",
-                "Recall": f"{metrics['recall']:.4f}",
-                "F1 Score": f"{metrics['f1_score']:.4f}",
-                "Training Time (s)": f"{metrics['training_time']:.3f}",
-                "Best Model": "🌟 YES" if name == metadata["best_model_name"] else ""
+                "Model Name": disp_name,
+                "Accuracy": f"{acc:.4f}",
+                "Precision": f"{prec:.4f}",
+                "Recall": f"{rec:.4f}",
+                "F1 Score": f"{f1:.4f}",
+                "Training Time (s)": f"{t_time:.3f}",
+                "Best Model": "🌟 YES" if name == best_model_name else ""
             })
         st.table(pd.DataFrame(records))
         
         st.subheader("Confusion Matrix Visualizer")
+        available_keys = list(metrics_dict.keys())
         selected_model_key = st.selectbox(
             "Select Model to Inspect",
-            list(metadata["models"].keys()),
-            format_func=lambda x: metadata["models"][x]["display_name"]
+            available_keys,
+            format_func=lambda x: format_model_name(x, metrics_dict)
         )
         
-        cm = metadata["models"][selected_model_key]["confusion_matrix"]
+        cm = metrics_dict[selected_model_key].get("confusion_matrix", [[0, 0], [0, 0]])
         fig, ax = plt.subplots(figsize=(5, 3.5))
         sns.heatmap(cm, annot=True, fmt="d", cmap="Greens", 
                     xticklabels=["Rejected (0)", "Approved (1)"],
@@ -244,6 +291,9 @@ elif menu == "🎯 Loan Predictor":
     st.header("🎯 Real-Time Loan Approval Predictor")
     
     metadata = ensure_models_trained()
+    metrics_dict = get_metrics_dict(metadata)
+    best_model_name = metadata.get("best_model_name", "logistic_regression")
+    best_disp_name = format_model_name(best_model_name, metrics_dict)
     
     with st.form("loan_form"):
         col1, col2, col3 = st.columns(3)
@@ -262,75 +312,89 @@ elif menu == "🎯 Loan Predictor":
             credit_history = st.selectbox("Credit History", [1.0, 0.0], format_func=lambda x: "Good / Cleared (1.0)" if x == 1.0 else "Debts / Uncleared (0.0)")
             property_area = st.selectbox("Property Area", ["Semiurban", "Urban", "Rural"])
             
-            model_options = {"best_model": f"Best Model ({metadata['models'][metadata['best_model_name']]['display_name']})"}
-            for k, v in metadata["models"].items():
-                model_options[k] = v["display_name"]
-            selected_model = st.selectbox("Select Classification Model", list(model_options.keys()), format_func=lambda x: model_options[x])
+            model_options = {"best_model": f"Best Model ({best_disp_name})"}
+            
+            model_keys = list(metrics_dict.keys()) if metrics_dict else [
+                "logistic_regression", "decision_tree", "random_forest", "k_nearest_neighbors", "support_vector_machine"
+            ]
+            for k in model_keys:
+                model_options[k] = format_model_name(k, metrics_dict)
+                
+            selected_model = st.selectbox(
+                "Select Classification Model", 
+                list(model_options.keys()), 
+                format_func=lambda x: model_options[x]
+            )
 
         submit_btn = st.form_submit_button("🔮 Predict Loan Approval", type="primary", use_container_width=True)
 
     if submit_btn:
-        input_data = {
-            "Gender": gender,
-            "Married": married,
-            "Dependents": dependents,
-            "Education": education,
-            "Self_Employed": self_employed,
-            "ApplicantIncome": float(applicant_income),
-            "CoapplicantIncome": float(coapplicant_income),
-            "LoanAmount": float(loan_amount),
-            "Loan_Amount_Term": float(loan_term),
-            "Credit_History": float(credit_history),
-            "Property_Area": property_area
-        }
-        
-        preprocessor = LoanPreprocessor.load()
-        active_model_name = metadata["best_model_name"] if selected_model == "best_model" else selected_model
-        model = model_manager.load_model(active_model_name)
-        
-        X_single = preprocessor.transform_single(input_data)
-        pred = int(model.predict(X_single)[0])
-        status = "Approved" if pred == 1 else "Rejected"
-        
-        if hasattr(model, "predict_proba"):
-            prob = float(model.predict_proba(X_single)[0][1])
-        else:
-            prob = 1.0 if pred == 1 else 0.0
+        try:
+            input_data = {
+                "Gender": gender,
+                "Married": married,
+                "Dependents": dependents,
+                "Education": education,
+                "Self_Employed": self_employed,
+                "ApplicantIncome": float(applicant_income),
+                "CoapplicantIncome": float(coapplicant_income),
+                "LoanAmount": float(loan_amount),
+                "Loan_Amount_Term": float(loan_term),
+                "Credit_History": float(credit_history),
+                "Property_Area": property_area
+            }
             
-        explanations = model_manager.explain_prediction(
-            active_model_name, input_data, pred, prob, preprocessor.feature_cols
-        )
-        
-        history_manager.add_prediction(input_data, status, prob, active_model_name)
-        
-        st.markdown("---")
-        st.subheader("Prediction Result")
-        
-        res_col1, res_col2 = st.columns(2)
-        with res_col1:
-            if status == "Approved":
-                st.markdown('<div class="approved-badge">✅ LOAN APPROVED</div>', unsafe_allow_html=True)
+            preprocessor = LoanPreprocessor.load()
+            active_model_name = best_model_name if selected_model == "best_model" else selected_model
+            model = model_manager.load_model(active_model_name)
+            
+            X_single = preprocessor.transform_single(input_data)
+            pred = int(model.predict(X_single)[0])
+            status = "Approved" if pred == 1 else "Rejected"
+            
+            if hasattr(model, "predict_proba"):
+                prob = float(model.predict_proba(X_single)[0][1])
             else:
-                st.markdown('<div class="rejected-badge">❌ LOAN REJECTED</div>', unsafe_allow_html=True)
-            st.write("")
-            st.metric("Approval Probability", f"{prob*100:.1f}%")
-            st.progress(prob)
-            st.caption(f"Model Used: **{metadata['models'][active_model_name]['display_name']}**")
+                prob = 1.0 if pred == 1 else 0.0
+                
+            explanations = model_manager.explain_prediction(
+                active_model_name, input_data, pred, prob, preprocessor.feature_cols
+            )
+            
+            history_manager.add_prediction(input_data, status, prob, active_model_name)
+            
+            st.markdown("---")
+            st.subheader("Prediction Result")
+            
+            res_col1, res_col2 = st.columns(2)
+            with res_col1:
+                if status == "Approved":
+                    st.markdown('<div class="approved-badge">✅ LOAN APPROVED</div>', unsafe_allow_html=True)
+                else:
+                    st.markdown('<div class="rejected-badge">❌ LOAN REJECTED</div>', unsafe_allow_html=True)
+                st.write("")
+                st.metric("Approval Probability", f"{prob*100:.1f}%")
+                st.progress(prob)
+                st.caption(f"Model Used: **{format_model_name(active_model_name, metrics_dict)}**")
 
-        with res_col2:
-            st.markdown("**💡 Key Decision Explanations:**")
-            for exp in explanations:
-                st.info(f"• {exp}")
+            with res_col2:
+                st.markdown("**💡 Key Decision Explanations:**")
+                for exp in explanations:
+                    st.info(f"• {exp}")
+        except Exception as e:
+            st.error(f"Prediction Error: {e}")
 
 # ----------------------------------------------------
 # 5. PREDICTION HISTORY
 # ----------------------------------------------------
 elif menu == "📜 Prediction History":
     st.header("📜 Prediction Audit History Log")
-    
-    history = history_manager.get_history(limit=50)
-    if history:
-        df_hist = pd.DataFrame(history)
-        st.dataframe(df_hist, use_container_width=True)
-    else:
-        st.info("No prediction history recorded yet. Make a prediction in the Loan Predictor module!")
+    try:
+        history = history_manager.get_history(limit=50)
+        if history:
+            df_hist = pd.DataFrame(history)
+            st.dataframe(df_hist, use_container_width=True)
+        else:
+            st.info("No prediction history recorded yet. Make a prediction in the Loan Predictor module!")
+    except Exception as e:
+        st.error(f"Unable to load prediction history: {e}")

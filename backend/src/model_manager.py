@@ -129,13 +129,16 @@ class ModelManager:
             # Confusion matrix
             cm = confusion_matrix(y_val, y_pred).tolist() # [[TN, FP], [FN, TP]]
             
+            display_name = name.replace("_", " ").title()
             self.model_metrics[name] = {
+                "display_name": display_name,
                 "accuracy": acc,
                 "precision": prec,
                 "recall": rec,
                 "f1_score": f1,
                 "confusion_matrix": cm,
                 "training_time_seconds": training_time,
+                "training_time": training_time,
                 "best_params": best_params
             }
             
