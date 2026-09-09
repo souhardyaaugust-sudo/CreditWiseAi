@@ -151,10 +151,10 @@ if menu == "📊 Overview & Analytics":
             st.metric("Approval Rate", f"{approved_pct:.1f}%")
         with col3:
             avg_inc = df['ApplicantIncome'].mean()
-            st.metric("Avg Applicant Income", f"${avg_inc:,.0f}")
+            st.metric("Avg Applicant Income", f"₹{avg_inc:,.0f}")
         with col4:
             avg_loan = df['LoanAmount'].mean()
-            st.metric("Avg Loan Amount ($k)", f"${avg_loan:.1f}k")
+            st.metric("Avg Loan Amount (₹ Thousands)", f"₹{avg_loan:.1f}k")
             
         st.markdown("---")
         
@@ -304,9 +304,9 @@ elif menu == "🎯 Loan Predictor":
             education = st.selectbox("Education", ["Graduate", "Not Graduate"])
         with col2:
             self_employed = st.selectbox("Self Employed", ["No", "Yes"])
-            applicant_income = st.number_input("Applicant Monthly Income ($)", value=5000, step=500)
-            coapplicant_income = st.number_input("Coapplicant Monthly Income ($)", value=0, step=500)
-            loan_amount = st.number_input("Loan Amount ($ in thousands)", value=150, step=10)
+            applicant_income = st.number_input("Applicant Monthly Income (₹)", value=5000, step=500)
+            coapplicant_income = st.number_input("Coapplicant Monthly Income (₹)", value=0, step=500)
+            loan_amount = st.number_input("Loan Amount (₹ in Thousands, e.g. 150 = ₹1.5 Lakhs)", value=150, step=10)
         with col3:
             loan_term = st.selectbox("Loan Term (Months)", [360, 180, 240, 120, 84, 60], index=0)
             credit_history = st.selectbox("Credit History", [1.0, 0.0], format_func=lambda x: "Good / Cleared (1.0)" if x == 1.0 else "Debts / Uncleared (0.0)")
@@ -380,7 +380,13 @@ elif menu == "🎯 Loan Predictor":
             with res_col2:
                 st.markdown("**💡 Key Decision Explanations:**")
                 for exp in explanations:
-                    st.info(f"• {exp}")
+                    if isinstance(exp, dict):
+                        text = exp.get("text", str(exp))
+                        factor = exp.get("factor", "")
+                        imp = exp.get("importance", "")
+                        st.info(f"**{factor}** ({imp} Impact): {text}")
+                    else:
+                        st.info(f"• {exp}")
         except Exception as e:
             st.error(f"Prediction Error: {e}")
 

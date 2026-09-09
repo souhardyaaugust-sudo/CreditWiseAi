@@ -274,21 +274,21 @@ class ModelManager:
                     "factor": "Income-to-Loan Ratio",
                     "importance": "Medium-High",
                     "type": "positive",
-                    "text": f"Strong income-to-loan ratio ({income_to_loan:.1f}x). Total income of ${total_income:,.0f} comfortably covers the requested ${loan_amount*1000:,.0f} loan."
+                    "text": f"Strong income-to-loan ratio ({income_to_loan:.1f}x). Total income of ₹{total_income:,.0f} comfortably covers the requested ₹{loan_amount*1000:,.0f} loan."
                 })
             elif total_income > 8000:
                 explanations.append({
                     "factor": "Applicant Income",
                     "importance": "Medium",
                     "type": "positive",
-                    "text": f"High household income (${total_income:,.0f}/month) provides strong repayment capacity."
+                    "text": f"High household income (₹{total_income:,.0f}/month) provides strong repayment capacity."
                 })
             else:
                 explanations.append({
                     "factor": "Financial Profile",
                     "importance": "Medium",
                     "type": "positive",
-                    "text": f"Applicant's income of ${total_income:,.0f} meets the baseline requirements for a loan of ${loan_amount*1000:,.0f} over {loan_term:.0f} months."
+                    "text": f"Applicant's income of ₹{total_income:,.0f} meets the baseline requirements for a loan of ₹{loan_amount*1000:,.0f} over {loan_term:.0f} months."
                 })
         else:
             if income_to_loan < 15:
@@ -296,21 +296,21 @@ class ModelManager:
                     "factor": "Income-to-Loan Ratio",
                     "importance": "High",
                     "type": "negative",
-                    "text": f"Weak income-to-loan ratio ({income_to_loan:.1f}x). Total income of ${total_income:,.0f} is insufficient for a loan of ${loan_amount*1000:,.0f}."
+                    "text": f"Weak income-to-loan ratio ({income_to_loan:.1f}x). Total income of ₹{total_income:,.0f} is insufficient for a loan of ₹{loan_amount*1000:,.0f}."
                 })
             elif loan_amount > 250:
                 explanations.append({
                     "factor": "Loan Amount",
                     "importance": "Medium-High",
                     "type": "negative",
-                    "text": f"The requested loan amount (${loan_amount*1000:,.0f}) is exceptionally high relative to standard household profiles."
+                    "text": f"The requested loan amount (₹{loan_amount*1000:,.0f}) is exceptionally high relative to standard household profiles."
                 })
             else:
                 explanations.append({
                     "factor": "Income Sufficiency",
                     "importance": "Medium",
                     "type": "negative",
-                    "text": f"Applicant income of ${total_income:,.0f}/month is considered marginal for a loan of ${loan_amount*1000:,.0f}."
+                    "text": f"Applicant income of ₹{total_income:,.0f}/month is considered marginal for a loan of ₹{loan_amount*1000:,.0f}."
                 })
 
         # Point 3: Additional Demographic / employment contexts
