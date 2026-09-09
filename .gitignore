@@ -1,0 +1,25 @@
+# Virtual Environment
+.venv/
+env/
+venv/
+ENV/
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Local Database & SQLite
+backend/database/history.db
+
+# Machine Learning Datasets & Saved Serialized Models
+backend/data/loan_data.csv
+backend/models/*.joblib
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# OS specific files
+.DS_Store
+Thumbs.db

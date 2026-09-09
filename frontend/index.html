@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CreditAnalyzer AI - Intelligent Loan Approval & Credit Risk Platform</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo-area">
+                <i class="fa-solid fa-brain-circuit logo-icon"></i>
+                <div class="logo-text">
+                    <h2>CreditAnalyzer <span>AI</span></h2>
+                    <p>Smarter Credit Decisions</p>
+                </div>
+            </div>
+            
+            <nav class="nav-menu">
+                <a href="#overview" class="nav-item active" data-tab="overview">
+                    <i class="fa-solid fa-chart-pie"></i> Overview Dashboard
+                </a>
+                <a href="#explorer" class="nav-item" data-tab="explorer">
+                    <i class="fa-solid fa-database"></i> Dataset Explorer
+                </a>
+                <a href="#pipeline" class="nav-item" data-tab="pipeline">
+                    <i class="fa-solid fa-sliders"></i> Data Pipeline
+                </a>
+                <a href="#models" class="nav-item" data-tab="models">
+                    <i class="fa-solid fa-microchip"></i> Model Benchmarks
+                </a>
+                <a href="#predictor" class="nav-item" data-tab="predictor">
+                    <i class="fa-solid fa-calculator"></i> Loan Predictor
+                </a>
+                <a href="#history" class="nav-item" data-tab="history">
+                    <i class="fa-solid fa-history"></i> Prediction History
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="status-badge online">
+                    <span class="dot"></span> Backend Connected
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Navigation / Header -->
+            <header class="header">
+                <div class="header-title">
+                    <h1 id="page-title">Overview Dashboard</h1>
+                    <p id="page-subtitle">Analyze historical applicant data and statistics.</p>
+                </div>
+                <div class="header-actions">
+                    <div class="best-model-pill" id="best-model-pill-header">
+                        <i class="fa-solid fa-trophy"></i> Best Model: <span id="header-best-model">Loading...</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Container for tabs -->
+            <div class="tab-content-container">
+                
+                <!-- 1. OVERVIEW DASHBOARD TAB -->
+                <section id="overview-tab" class="tab-panel active">
+                    <!-- KPI Cards Grid -->
+                    <div class="kpi-grid">
+                        <div class="kpi-card">
+                            <div class="kpi-icon icon-blue"><i class="fa-solid fa-users"></i></div>
+                            <div class="kpi-info">
+                                <h3>Total Applicants</h3>
+                                <p class="kpi-value" id="kpi-total">0</p>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-icon icon-green"><i class="fa-solid fa-circle-check"></i></div>
+                            <div class="kpi-info">
+                                <h3>Loans Approved</h3>
+                                <p class="kpi-value" id="kpi-approved">0</p>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-icon icon-red"><i class="fa-solid fa-circle-xmark"></i></div>
+                            <div class="kpi-info">
+                                <h3>Loans Rejected</h3>
+                                <p class="kpi-value" id="kpi-rejected">0</p>
+                            </div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-icon icon-purple"><i class="fa-solid fa-percentage"></i></div>
+                            <div class="kpi-info">
+                                <h3>Approval Rate</h3>
+                                <p class="kpi-value" id="kpi-rate">0.0%</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Grid -->
+                    <div class="charts-grid-1">
+                        <div class="chart-card glass-panel">
+                            <h3>Loan Approval Ratio</h3>
+                            <div class="chart-container-doughnut">
+                                <canvas id="chart-approval"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-card glass-panel col-span-2">
+                            <h3>Property Area Distribution</h3>
+                            <div class="chart-container-bar">
+                                <canvas id="chart-property"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="charts-grid-2">
+                        <div class="chart-card glass-panel">
+                            <h3>Applicant & Co-Applicant Income Distributions</h3>
+                            <div class="chart-container">
+                                <canvas id="chart-income"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-card glass-panel">
+                            <h3>Credit History Correlation</h3>
+                            <div class="chart-container">
+                                <canvas id="chart-credit"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. DATASET EXPLORER TAB -->
+                <section id="explorer-tab" class="tab-panel">
+                    <div class="glass-panel datatable-container">
+                        <!-- Filters Header -->
+                        <div class="table-filters-bar">
+                            <div class="search-input-wrapper">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <input type="text" id="table-search" placeholder="Search by Loan ID...">
+                            </div>
+                            
+                            <div class="filters-group">
+                                <select id="filter-gender">
+                                    <option value="">All Genders</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                </select>
+                                
+                                <select id="filter-education">
+                                    <option value="">All Education</option>
+                                    <option value="Graduate">Graduate</option>
+                                    <option value="Not Graduate">Not Graduate</option>
+                                </select>
+                                
+                                <select id="filter-status">
+                                    <option value="">All Statuses</option>
+                                    <option value="Y">Approved</option>
+                                    <option value="N">Rejected</option>
+                                </select>
+                                
+                                <button class="btn btn-secondary btn-icon" id="btn-reset-filters" title="Reset Filters">
+                                    <i class="fa-solid fa-arrow-rotate-left"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Table -->
+                        <div class="responsive-table-wrapper">
+                            <table class="data-table" id="data-table-explorer">
+                                <thead>
+                                    <tr>
+                                        <th class="sortable" data-sort="Loan_ID">Loan ID <i class="fa-solid fa-sort"></i></th>
+                                        <th class="sortable" data-sort="Gender">Gender <i class="fa-solid fa-sort"></i></th>
+                                        <th class="sortable" data-sort="Married">Married <i class="fa-solid fa-sort"></i></th>
+                                        <th class="sortable" data-sort="Dependents">Dependents <i class="fa-solid fa-sort"></i></th>
+                                        <th class="sortable" data-sort="Education">Education <i class="fa-solid fa-sort"></i></th>
+                                        <th class="sortable" data-sort="Self_Employed">Self Employed <i class="fa-solid fa-sort"></i></th>
+                                        <th class="sortable" data-sort="ApplicantIncome">Income ($) <i class="fa-solid fa-sort"></i></th>
+                                        <th class="sortable" data-sort="CoapplicantIncome">Co-Income ($) <i class="fa-solid fa-sort"></i></th>
+                                        <th class="sortable" data-sort="LoanAmount">Loan Amt ($k) <i class="fa-solid fa-sort"></i></th>
+                                        <th class="sortable" data-sort="Loan_Amount_Term">Term (m) <i class="fa-solid fa-sort"></i></th>
+                                        <th class="sortable" data-sort="Credit_History">Credit History <i class="fa-solid fa-sort"></i></th>
+                                        <th class="sortable" data-sort="Property_Area">Property Area <i class="fa-solid fa-sort"></i></th>
+                                        <th class="sortable" data-sort="Loan_Status">Status <i class="fa-solid fa-sort"></i></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-body">
+                                    <tr>
+                                        <td colspan="13" class="text-center">Loading dataset...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Table Pagination Footer -->
+                        <div class="table-pagination-bar">
+                            <div class="pagination-info">
+                                Showing <span id="pag-start">0</span> to <span id="pag-end">0</span> of <span id="pag-total">0</span> entries
+                            </div>
+                            <div class="pagination-controls">
+                                <button class="btn btn-secondary btn-sm" id="pag-btn-prev"><i class="fa-solid fa-chevron-left"></i> Prev</button>
+                                <span class="page-indicator">Page <span id="pag-current">1</span> of <span id="pag-pages">1</span></span>
+                                <button class="btn btn-secondary btn-sm" id="pag-btn-next">Next <i class="fa-solid fa-chevron-right"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. DATA PIPELINE TAB -->
+                <section id="pipeline-tab" class="tab-panel">
+                    <div class="pipeline-grid">
+                        <!-- Configuration Card -->
+                        <div class="glass-panel card-control">
+                            <h3>Pipeline Operations & Feature Engineering</h3>
+                            <p class="section-desc">Manage the lifecycle of the data prep pipeline and scaling features.</p>
+                            
+                            <form id="pipeline-config-form" class="mt-4">
+                                <div class="form-group">
+                                    <label for="pipeline-impute-strategy">Numerical Missing Value Imputation</label>
+                                    <select id="pipeline-impute-strategy" class="form-control">
+                                        <option value="median" selected>Median (Recommended - robust to income outliers)</option>
+                                        <option value="mean">Mean</option>
+                                        <option value="mode">Mode</option>
+                                    </select>
+                                    <span class="input-note">Categorical missing values are automatically imputed using their mode.</span>
+                                </div>
+
+                                <div class="features-engineered-box">
+                                    <h4>Engineered Features Summary</h4>
+                                    <ul>
+                                        <li>
+                                            <strong>Total_Income</strong>
+                                            <span>ApplicantIncome + CoapplicantIncome</span>
+                                        </li>
+                                        <li>
+                                            <strong>Income_to_Loan_Ratio</strong>
+                                            <span>Total_Income / LoanAmount</span>
+                                        </li>
+                                        <li>
+                                            <strong>Loan_Amount_per_Term</strong>
+                                            <span>LoanAmount / Loan_Amount_Term</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary btn-block" id="btn-run-pipeline">
+                                    <i class="fa-solid fa-play"></i> Re-fit & Scale Pipeline
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Statistics Card -->
+                        <div class="glass-panel card-details">
+                            <h3>Preprocessing Summary Stats</h3>
+                            <p class="section-desc">Null distribution details and transformation statuses.</p>
+                            
+                            <div class="nulls-summary-container">
+                                <div class="nulls-header mt-4">
+                                    <h4>Detected Missing Values in Raw Data</h4>
+                                    <span class="badge" id="badge-nulls-count">0 Nulls</span>
+                                </div>
+                                
+                                <div class="nulls-bars-grid" id="nulls-distribution-list">
+                                    <!-- Dynamic elements from JS -->
+                                    <p>Loading summary...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Correlation Heatmap Container -->
+                    <div class="glass-panel mt-4">
+                        <h3>Feature Correlation Matrix (Numerical Features)</h3>
+                        <p class="section-desc mb-4">Correlation of base numerical values + engineered financial indicators.</p>
+                        
+                        <div class="correlation-heatmap-wrapper">
+                            <div class="heatmap-grid" id="correlation-heatmap-grid">
+                                <!-- Dynamic styled matrix from JS -->
+                                <p class="text-center py-4">Generating heatmap...</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4. MODEL BENCHMARKS TAB -->
+                <section id="models-tab" class="tab-panel">
+                    <div class="glass-panel mb-4">
+                        <div class="action-header">
+                            <div>
+                                <h3>Classifier Training & Optimization Suite</h3>
+                                <p class="section-desc">Train models and perform hyperparameter search with 5-fold cross-validation.</p>
+                            </div>
+                            <div class="action-controls">
+                                <div class="toggle-wrapper">
+                                    <label class="switch">
+                                        <input type="checkbox" id="toggle-grid-search" checked>
+                                        <span class="slider round"></span>
+                                    </label>
+                                    <span class="toggle-label">GridSearchCV Hyperparameter Tuning</span>
+                                </div>
+                                <button class="btn btn-primary" id="btn-train-models">
+                                    <i class="fa-solid fa-rotate"></i> Train & Compare Models
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Training status log -->
+                        <div class="training-overlay" id="training-overlay">
+                            <div class="spinner-container">
+                                <div class="double-bounce-spinner"></div>
+                                <h4 id="training-status-text">Optimizing and training classification models...</h4>
+                                <p>This may take up to 20 seconds with hyperparameter tuning enabled.</p>
+                            </div>
+                        </div>
+
+                        <!-- Models Benchmarking Table -->
+                        <div class="responsive-table-wrapper mt-4">
+                            <table class="data-table text-left">
+                                <thead>
+                                    <tr>
+                                        <th>Model Name</th>
+                                        <th>F1 Score</th>
+                                        <th>Accuracy</th>
+                                        <th>Precision</th>
+                                        <th>Recall</th>
+                                        <th>Training Time</th>
+                                        <th>Hyperparameters</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="models-comparison-body">
+                                    <tr>
+                                        <td colspan="8" class="text-center">Loading model benchmarks...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="charts-grid-2">
+                        <!-- Features Importance -->
+                        <div class="glass-panel">
+                            <h3>Feature Importances / Weights</h3>
+                            <p class="section-desc mb-3">Which factors are contributing most to the active model predictions.</p>
+                            <div class="chart-container">
+                                <canvas id="chart-importances"></canvas>
+                            </div>
+                        </div>
+                        
+                        <!-- Confusion Matrix Card -->
+                        <div class="glass-panel">
+                            <h3>Confusion Matrix</h3>
+                            <p class="section-desc mb-3">Model evaluation on validation dataset.</p>
+                            
+                            <div class="confusion-matrix-display mt-4">
+                                <div class="cm-grid">
+                                    <div class="cm-cell cm-header-empty"></div>
+                                    <div class="cm-cell cm-axis-label">Predicted NO</div>
+                                    <div class="cm-cell cm-axis-label">Predicted YES</div>
+                                    
+                                    <div class="cm-cell cm-axis-label vertical">Actual NO</div>
+                                    <div class="cm-cell cm-value tn-cell" id="cm-tn">0</div>
+                                    <div class="cm-cell cm-value fp-cell" id="cm-fp">0</div>
+                                    
+                                    <div class="cm-cell cm-axis-label vertical">Actual YES</div>
+                                    <div class="cm-cell cm-value fn-cell" id="cm-fn">0</div>
+                                    <div class="cm-cell cm-value tp-cell" id="cm-tp">0</div>
+                                </div>
+                                <div class="cm-details mt-4">
+                                    <div class="cm-legend">
+                                        <div class="legend-item"><span class="color-box tp-cell"></span> True Positives (TP)</div>
+                                        <div class="legend-item"><span class="color-box tn-cell"></span> True Negatives (TN)</div>
+                                        <div class="legend-item"><span class="color-box fp-cell"></span> False Positives (FP)</div>
+                                        <div class="legend-item"><span class="color-box fn-cell"></span> False Negatives (FN)</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 5. LOAN PREDICTOR TAB -->
+                <section id="predictor-tab" class="tab-panel">
+                    <div class="predictor-layout">
+                        <!-- Questionnaire Form -->
+                        <div class="glass-panel">
+                            <h3>Applicant Financial & Social Profile</h3>
+                            <p class="section-desc">Enter demographic and financial figures to evaluate loan suitability.</p>
+                            
+                            <form id="prediction-form" class="mt-4">
+                                <div class="form-row">
+                                    <div class="form-group col-md-6">
+                                        <label for="form-gender">Gender</label>
+                                        <select id="form-gender" class="form-control" required>
+                                            <option value="Male" selected>Male</option>
+                                            <option value="Female">Female</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label for="form-married">Marital Status</label>
+                                        <select id="form-married" class="form-control" required>
+                                            <option value="Yes" selected>Married (Yes)</option>
+                                            <option value="No">Unmarried (No)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group col-md-6">
+                                        <label for="form-dependents">Number of Dependents</label>
+                                        <select id="form-dependents" class="form-control" required>
+                                            <option value="0" selected>0 Dependents</option>
+                                            <option value="1">1 Dependent</option>
+                                            <option value="2">2 Dependents</option>
+                                            <option value="3+">3 or More Dependents</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label for="form-education">Education Status</label>
+                                        <select id="form-education" class="form-control" required>
+                                            <option value="Graduate" selected>Graduate</option>
+                                            <option value="Not Graduate">Not Graduate</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group col-md-6">
+                                        <label for="form-employed">Self-Employment</label>
+                                        <select id="form-employed" class="form-control" required>
+                                            <option value="No" selected>No (Standard Employed)</option>
+                                            <option value="Yes">Yes (Self Employed)</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label for="form-credit">Credit History Status</label>
+                                        <select id="form-credit" class="form-control" required>
+                                            <option value="1.0" selected>Reliable / Satisfies requirements (1.0)</option>
+                                            <option value="0.0">Unreliable / Prior Delinquency (0.0)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group col-md-6">
+                                        <label for="form-income">Applicant Monthly Income ($)</label>
+                                        <input type="number" id="form-income" class="form-control" value="5000" min="0" required>
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label for="form-coincome">Co-Applicant Monthly Income ($)</label>
+                                        <input type="number" id="form-coincome" class="form-control" value="0" min="0" required>
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group col-md-6">
+                                        <label for="form-loan">Loan Amount requested (in Thousands, e.g. 120 = $120,000)</label>
+                                        <input type="number" id="form-loan" class="form-control" value="120" min="1" required>
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label for="form-term">Loan Term Length (in Months, e.g. 360 = 30 Years)</label>
+                                        <input type="number" id="form-term" class="form-control" value="360" min="12" required>
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group col-md-6">
+                                        <label for="form-property">Property Location Area</label>
+                                        <select id="form-property" class="form-control" required>
+                                            <option value="Semiurban" selected>Semiurban (Suburbs)</option>
+                                            <option value="Urban">Urban (City)</option>
+                                            <option value="Rural">Rural</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label for="form-model">Evaluation Machine Learning Model</label>
+                                        <select id="form-model" class="form-control">
+                                            <option value="best_model" selected>Automatic (Best Trained Model)</option>
+                                            <option value="logistic_regression">Logistic Regression</option>
+                                            <option value="decision_tree">Decision Tree Classifier</option>
+                                            <option value="random_forest">Random Forest Classifier</option>
+                                            <option value="k_nearest_neighbors">K-Nearest Neighbors</option>
+                                            <option value="support_vector_machine">Support Vector Machine</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary btn-block py-3 mt-4" id="btn-predict">
+                                    <i class="fa-solid fa-magnifying-glass-chart"></i> Run Approval Evaluation
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Prediction Outcome Card -->
+                        <div class="prediction-outcome-panel glass-panel" id="prediction-result-panel">
+                            <div class="empty-state-prediction" id="prediction-empty-state">
+                                <i class="fa-solid fa-calculator-combined large-icon"></i>
+                                <h3>Awaiting Input</h3>
+                                <p>Fill out the applicant profile form and run the evaluation to generate prediction results.</p>
+                            </div>
+
+                            <div class="prediction-results-content hidden" id="prediction-results-content">
+                                <div class="badge-row">
+                                    <span class="status-result-badge badge-green" id="result-status-badge">Approved</span>
+                                </div>
+                                
+                                <!-- Radial Progress gauge -->
+                                <div class="gauge-center-wrapper">
+                                    <div class="radial-gauge-container">
+                                        <svg class="radial-svg" viewBox="0 0 100 100">
+                                            <circle class="radial-bg" cx="50" cy="50" r="40"></circle>
+                                            <circle class="radial-progress" id="result-progress-ring" cx="50" cy="50" r="40" stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle>
+                                        </svg>
+                                        <div class="gauge-text-overlay">
+                                            <span class="percentage" id="result-probability">0%</span>
+                                            <span class="label">Approval Probability</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="evaluation-source-box">
+                                    <p>Evaluation Model: <strong id="result-model">Random Forest Classifier</strong></p>
+                                </div>
+
+                                <div class="explanation-details-box mt-4">
+                                    <h4>Decision Factors Analysis</h4>
+                                    <div class="explanations-list" id="result-explanations-list">
+                                        <!-- Dynamic bullets from JS -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 6. PREDICTION HISTORY LOG -->
+                <section id="history-tab" class="tab-panel">
+                    <div class="glass-panel">
+                        <div class="action-header">
+                            <div>
+                                <h3>History Log of Evaluated Profiles</h3>
+                                <p class="section-desc">Audit trail of previously submitted loan evaluations.</p>
+                            </div>
+                            <button class="btn btn-secondary" id="btn-refresh-history">
+                                <i class="fa-solid fa-arrows-rotate"></i> Refresh Log
+                            </button>
+                        </div>
+
+                        <!-- History logs table -->
+                        <div class="responsive-table-wrapper mt-4">
+                            <table class="data-table text-left">
+                                <thead>
+                                    <tr>
+                                        <th>Date & Time</th>
+                                        <th>Applicant Income</th>
+                                        <th>Co-Income</th>
+                                        <th>Loan Amt</th>
+                                        <th>Credit Hist</th>
+                                        <th>Property Area</th>
+                                        <th>Model Used</th>
+                                        <th>Approval Prob.</th>
+                                        <th>Decision Outcome</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="history-table-body">
+                                    <tr>
+                                        <td colspan="9" class="text-center">No prediction records recorded yet.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
